@@ -1,0 +1,36 @@
+#include <SoftwareSerial.h> // Include software serial library, ESP8266 library dependency
+#include <SparkFunESP8266WiFi.h> // Include the ESP8266 AT library
+void setup(){
+
+if (esp8266.begin()) // Initialize the ESP8266 and check it's return status
+  Serial.println("ESP8266 ready to go!"); // Communication and setup successful
+else
+  Serial.println("Unable to communicate with the ESP8266 :(");
+
+int retVal = esp8266.connect("WillsHotspot", "");
+if (retVal < 0)
+{
+    Serial.print(F("Error connecting: "));
+    Serial.println(retVal);
+}
+
+Serial.begin(9600);
+}
+
+void loop(){
+
+IPAddress myIP = esp8266.localIP(); // Get the ESP8266's local IP
+Serial.print(F("My IP is: ")); Serial.println(myIP);
+ESP8266Client client; // Create a client object
+int retVal = client.connect("192.168.43.181", 80);
+if (retVal > 0)
+    Serial.println("Successfully connected!");
+client.println("GET /writer.php?field=666 HTTP/1.1");
+    client.println("Host: 192.168.43.181");
+    client.println("Connection: close");
+    client.println();
+while (client.available()) // While there's data available
+    Serial.write(client.read()); // Read it and print to serial
+client.stop();
+delay(10000);
+}

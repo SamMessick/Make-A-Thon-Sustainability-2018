@@ -1,0 +1,258 @@
+//=====================================================
+// Demo_Code.a
+// Receives sensor data from two PIR sensors in order
+// to determine how many people are in a single-entrance
+// room at a time. The total number of people is sent
+// every hour to a MySQL database where the information
+// can be analyzed.
+//
+// authors: Sam Messick (NCSU ECE) and Will Carpenter (NCSU CSC)
+// last modified: 1/28/2018
+//=====================================================
+
+
+#include <SoftwareSerial.h> // Include software serial library, ESP8266 library dependency
+#include <SparkFunESP8266WiFi.h> // Include the ESP8266 AT library
+#include "Timer.h"
+
+// ---Pins---
+int pirSensorBack  = 2;       // Right sensor when viewed from front
+int pirSensorFront = 3;       // Left sensor when viewed from front
+int relayConnect   = 4;       // Determines whether or not lights are on
+// ---Macroscopic Data---
+int peopleInRoom   = 0;       // No people initially assumed to be in room
+int headCountTotal = 0;       // ''  ''
+int sensorFlag = 0;           // Both sensors assumed to be initially inactive
+  //==========================================================
+  // sensorFlag states
+  // ----------
+  // Case 0: Person has entered or exited; nothing to remember
+  // ---Entering--- 
+  // Case 1: Person is entering; back sensor triggered
+  // Case 2: Person is entering; front and back sensor triggered
+  // Case 3: Person is entering; front sensor triggered
+  // ---Exiting---
+  // Case 4: Person is exiting; front sensor triggered alone
+  // Case 5: Person is exiting; front and back sensor triggered
+  // Case 6: Person is exiting; back sensor triggered alone
+  //==========================================================
+
+//---Timer---
+Timer timer;
+int loopCounter;
+
+void setup() {
+  // Assign pin functions
+  pinMode(pirSensorBack, INPUT);
+  pinMode(pirSensorFront, INPUT);
+  pinMode(relayConnect, OUTPUT);
+  digitalWrite(relayConnect, LOW);
+  // Timed sensor check (every second)
+  int sensorCheck = timer.every(1000, updateHeadCount);
+
+  // Establish server connection to LAN
+  if (esp8266.begin()) // Initialize the ESP8266 and check it's return status
+    Serial.println("ESP8266 ready to go!"); // Communication and setup successful
+  else
+    Serial.println("Unable to communicate with the ESP8266 :(");
+
+  int retVal = esp8266.connect("WillsHotspot", ""/*no password*/);
+  if (retVal < 0)
+  {
+    Serial.print(F("Error connecting: "));
+    Serial.println(retVal);
+  }
+  Serial.begin(9600); // Print requested output to serial
+}
+
+void loop() {
+  if(loopCounter == 60*60){
+    ESP8266Client client; // Create a client object
+    int retVal = client.connect("192.168.43.181", 80);
+    if (retVal > 0)
+    Serial.println("Successfully connected!");
+    client.println("GET /writer.php?field=%d HTTP/1.1", headCountTotal);
+    client.println("Host: 192.168.43.181");
+    client.println("Connection: close");
+    client.println();
+    // are these necessary?
+    while (client.available()) // While there's data available
+      Serial.write(client.read()); // Read it and print to serial
+    client.stop();
+  }
+  // Update timer; read sensor states and adjust current state if needed
+  timer.update();
+  loopCounter++;
+  // Check if lights need to be turned on or off
+  switch(peopleInRoom) {
+    case 0:
+      digitalWrite(relayConnect, LOW);
+    default:
+      digitalWrite(relayConnect, HIGH);
+  }
+  
+}
+
+
+
+// ---Functions---
+
+
+//==============================================================
+// Updates sensorFlag based on current flag and pirSensor data
+//==============================================================
+void checkForPeople(int sensFlag /*sensorFlag*/){
+  // Update sensor readings
+  int backSensed = digitalRead(pirSensorBack);
+  int frontSensed = digitalRead(pirSensorFront);
+
+  // Check if either sensor was tripped
+  // and update 
+  switch(sensFlag){
+    case 0:
+      switch(backSensed){
+        case HIGH:
+          switch(frontSensed){
+            case HIGH:
+              sensorFlag = 0;
+              break;
+            case LOW:
+              sensorFlag = 1;
+              break;
+          }
+          break;
+        case LOW:
+          switch(frontSensed){
+            case HIGH:
+              sensorFlag = 4;
+              break;
+          }
+      }
+      break;
+    case 1:
+      switch(backSensed){
+        case LOW:
+          switch(frontSensed){
+            case LOW:
+              sensorFlag = 0;
+              break;
+            case HIGH:
+              sensorFlag = 3;
+              break;
+          }
+          break;
+        case HIGH:
+          switch(frontSensed){
+            case HIGH:
+              sensorFlag = 2;
+              break;
+          }
+      }
+      break;
+    case 2:
+      switch(backSensed){
+        case HIGH:
+          switch(frontSensed){
+            case LOW:
+              sensorFlag = 1;
+              break;
+          }
+          break;
+        case LOW:
+          switch(frontSensed){
+            case HIGH:
+              sensorFlag = 3;
+              break;
+            case LOW:
+              sensorFlag = 0;
+          }
+      }
+      break;
+    case 3:
+      switch(backSensed){
+        case LOW:
+          switch(frontSensed){
+            case LOW:
+              sensorFlag = 0;
+              peopleInRoom++;
+              headCountTotal++;
+              break;
+          }
+          break;
+        case HIGH:
+          switch(frontSensed){
+            case LOW:
+              sensorFlag = 1;
+              break;
+            case HIGH:
+              sensorFlag = 2;
+          }
+      }
+      break;
+    case 4:
+      switch(frontSensed){
+        case LOW:
+          switch(backSensed){
+            case LOW:
+              sensorFlag = 0;
+              break;
+            case HIGH:
+              sensorFlag = 6;
+              break;
+          }
+          break;
+        case HIGH:
+          switch(backSensed){
+            case HIGH:
+              sensorFlag = 5;
+              break;
+          }
+      }
+      break;
+    case 5:
+      switch(frontSensed){
+        case HIGH:
+          switch(backSensed){
+            case LOW:
+              sensorFlag = 4;
+              break;
+          }
+          break;
+        case LOW:
+          switch(backSensed){
+            case HIGH:
+              sensorFlag = 6;
+              break;
+            case LOW:
+              sensorFlag = 0;
+          }
+      }
+      break;
+    case 6:
+      switch(frontSensed){
+        case LOW:
+          switch(backSensed){
+            case LOW:
+              sensorFlag = 0;
+              peopleInRoom--;
+              break;
+          }
+          break;
+        case HIGH:
+          switch(backSensed){
+            case LOW:
+              sensorFlag = 4;
+              break;
+            case HIGH:
+              sensorFlag = 5;
+          }
+      }
+  }
+}
+
+//==============================================================
+// Updates sensorFlag (side effect) and returns head count
+//==============================================================
+int updateHeadCount(){
+  checkForPeople(sensorFlag);
+}

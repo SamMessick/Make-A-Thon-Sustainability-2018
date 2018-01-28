@@ -71,7 +71,9 @@ void loop() {
     int retVal = client.connect("192.168.43.181", 80);
     if (retVal > 0)
     Serial.println("Successfully connected!");
-    client.println("GET /writer.php?field=%d HTTP/1.1", headCountTotal);
+    client.println("GET /writer.php?field=);
+    client.print(headCountTotal);
+    client.println(" HTTP/1.1");
     client.println("Host: 192.168.43.181");
     client.println("Connection: close");
     client.println();

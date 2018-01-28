@@ -1,0 +1,206 @@
+// ---Pins---
+int pirSensorBack  = 2;
+int pirSensorFront = 3;
+int relayConnect   = 4;
+// ---Macroscopic Data---
+int peopleInRoom   = 0;       // No people initially assumed to be in room
+int headCountTotal = 0;       // ''  ''
+int sensorFlag = 0;           // Both sensors assumed to be initially inactive
+  //==========================================================
+  // sensorFlag states
+  // ----------
+  // Case 0: Person has entered or exited; nothing to remember
+  // ---Entering--- 
+  // Case 1: Person is entering; back sensor triggered
+  // Case 2: Person is entering; front and back sensor triggered
+  // Case 3: Person is entering; front sensor triggered
+  // ---Exiting---
+  // Case 4: Person is exiting; front sensor triggered alone
+  // Case 5: Person is exiting; front and back sensor triggered
+  // Case 6: Person is exiting; back sensor triggered alone
+  //==========================================================
+
+void setup() {
+  Serial.begin(9600);
+pinMode(pirSensorBack, INPUT);
+pinMode(pirSensorFront, INPUT);
+pinMode(relayConnect, OUTPUT);
+digitalWrite(relayConnect, LOW);
+}
+
+void loop() {
+  // Read sensor states and adjust current state if needed
+  updateHeadCount();
+  // Check if lights need to be turned on or off
+  switch(peopleInRoom) {
+    case 0:
+      digitalWrite(relayConnect, LOW);
+    default:
+      digitalWrite(relayConnect, HIGH);
+  }
+}
+
+
+
+// ---Functions---
+
+
+//==============================================================
+// Updates sensorFlag based on current flag and pirSensor data
+//==============================================================
+void checkForPeople(int sensFlag /*sensorFlag*/){
+  // Update sensor readings
+  int backSensed = digitalRead(pirSensorBack);
+  int frontSensed = digitalRead(pirSensorFront);
+
+  // Check if either sensor was tripped
+  // and update 
+  switch(sensFlag){
+    case 0:
+      switch(backSensed){
+        case HIGH:
+          switch(frontSensed){
+            case HIGH:
+              sensorFlag = 0;
+              break;
+            case LOW:
+              sensorFlag = 1;
+              break;
+          }
+          break;
+        case LOW:
+          switch(frontSensed){
+            case HIGH:
+              sensorFlag = 4;
+              break;
+          }
+      }
+      break;
+    case 1:
+      switch(backSensed){
+        case LOW:
+          switch(frontSensed){
+            case LOW:
+              sensorFlag = 0;
+              break;
+            case HIGH:
+              sensorFlag = 3;
+              break;
+          }
+          break;
+        case HIGH:
+          switch(frontSensed){
+            case HIGH:
+              sensorFlag = 2;
+              break;
+          }
+      }
+      break;
+    case 2:
+      switch(backSensed){
+        case HIGH:
+          switch(frontSensed){
+            case LOW:
+              sensorFlag = 1;
+              break;
+          }
+          break;
+        case LOW:
+          switch(frontSensed){
+            case HIGH:
+              sensorFlag = 3;
+              break;
+            case LOW:
+              sensorFlag = 0;
+          }
+      }
+      break;
+    case 3:
+      switch(backSensed){
+        case LOW:
+          switch(frontSensed){
+            case LOW:
+              sensorFlag = 0;
+              peopleInRoom++;
+              headCountTotal++;
+              break;
+          }
+          break;
+        case HIGH:
+          switch(frontSensed){
+            case LOW:
+              sensorFlag = 1;
+              break;
+            case HIGH:
+              sensorFlag = 2;
+          }
+      }
+      break;
+    case 4:
+      switch(frontSensed){
+        case LOW:
+          switch(backSensed){
+            case LOW:
+              sensorFlag = 0;
+              break;
+            case HIGH:
+              sensorFlag = 6;
+              break;
+          }
+          break;
+        case HIGH:
+          switch(backSensed){
+            case HIGH:
+              sensorFlag = 5;
+              break;
+          }
+      }
+      break;
+    case 5:
+      switch(frontSensed){
+        case HIGH:
+          switch(backSensed){
+            case LOW:
+              sensorFlag = 4;
+              break;
+          }
+          break;
+        case LOW:
+          switch(backSensed){
+            case HIGH:
+              sensorFlag = 6;
+              break;
+            case LOW:
+              sensorFlag = 0;
+          }
+      }
+      break;
+    case 6:
+      switch(frontSensed){
+        case LOW:
+          switch(backSensed){
+            case LOW:
+              sensorFlag = 0;
+              peopleInRoom--;
+              break;
+          }
+          break;
+        case HIGH:
+          switch(backSensed){
+            case LOW:
+              sensorFlag = 4;
+              break;
+            case HIGH:
+              sensorFlag = 5;
+          }
+      }
+  }
+}
+
+//==============================================================
+// Updates sensorFlag (side effect) and returns head count
+//==============================================================
+int updateHeadCount(){
+  checkForPeople(sensorFlag);
+  return headCountTotal;
+}

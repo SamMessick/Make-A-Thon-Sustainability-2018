@@ -1,7 +1,7 @@
 ## Make-A-Thon-Sustainability-2018'
 #  The 401 Four
 
-
+![alt text](https://github.com/UrariYsasi/Make-A-Thon-Sustainability-2018/blob/master/Images/The-401-Four.jpg)
 
 4 suitemates from room 401 Sullivan Hall got together to build
 a solution to a sustainability problem on
@@ -38,6 +38,5 @@ Over the course of our project, our main goals were to have our device be:
 We hope that our device may be adopted some day or expanded to more
 general applications so as to benefit society.
 
-![alt text](https://github.com/UrariYsasi/Make-A-Thon-Sustainability-2018/Images/Circuit-Schematic.png)
-![alt text](https://github.com/UrariYsasi/Make-A-Thon-Sustainability-2018/Images/First-Design-Meeting.jpg)
-![alt text](https://github.com/UrariYsasi/Make-A-Thon-Sustainability-2018/Images/The-401-Four.jpg)
+![alt text](https://github.com/UrariYsasi/Make-A-Thon-Sustainability-2018/blob/master/Images/Circuit-Schematic.png)
+![alt text](https://github.com/UrariYsasi/Make-A-Thon-Sustainability-2018/blob/master/Images/First-Design-Meeting.jpg)

@@ -38,6 +38,6 @@ Over the course of our project, our main goals were to have our device be:
 We hope that our device may be adopted some day or expanded to more
 general applications so as to benefit society.
 
-![alt text](Images/Circuit-Schematic)
-![alt text](Images/First-Design-Meeting)
-![alt text](Images/The-401-Four)
+![alt text](https://github.com/UrariYsasi/Make-A-Thon-Sustainability-2018/Images/Circuit-Schematic.png)
+![alt text](https://github.com/UrariYsasi/Make-A-Thon-Sustainability-2018/Images/First-Design-Meeting.jpg)
+![alt text](https://github.com/UrariYsasi/Make-A-Thon-Sustainability-2018/Images/The-401-Four.jpg)
